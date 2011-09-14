@@ -1,28 +1,16 @@
 <?xml version="1.0"?>
-<project name="SampleJavaProject" default="jar"
-	 xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="Halftone" default="jar">
 
   <!-- Project-specific configuration -->
-  <property name="package" value="sample.java.project"/>
+  <property name="package" value="halftone"/>
   <property name="main.class" value="${package}.${ant.project.name}"/>
   <property name="jar.file" value="${ant.project.name}.jar"/>
 
   <!-- Standard Directory Layout -->
   <property name="src.dir" value="src"/>
-  <property name="test.dir" value="test"/>
   <property name="build.dir" value="build"/>
   <property name="build.classes.dir" value="${build.dir}/classes"/>
-  <property name="test.classes.dir" value="${build.dir}/test"/>
   <property name="dist.dir" value="dist"/>
-  <property name="lib.dir" value="lib"/>
-
-  <!-- Project classpath -->
-  <available file="${lib.dir}" property="lib.present"/>
-  <path id="build.classpath">
-    <fileset dir="${lib.dir}">
-      <include name="*.jar"/>
-    </fileset>
-  </path>
 
   <!-- Targets -->
 
@@ -31,18 +19,12 @@
     <mkdir dir="${dist.dir}"/>
   </target>
 
-  <target name="resolve" unless="lib.present"
-	  description="Retrieve dependencies with ivy.">
-    <ivy:retrieve type="jar,bundle"/>
-  </target>
-
-  <target name="compile" depends="init,resolve"
+  <target name="compile" depends="init"
 	  description="Compile all source files.">
     <javac srcdir="${src.dir}" destdir="${build.classes.dir}"
 	   optimize="on" debug="on" deprecation="on"
 	   includeantruntime="false">
       <compilerarg value="-Xlint"/>
-      <classpath refid="build.classpath"/>
     </javac>
     <copy todir="${build.classes.dir}">
       <fileset dir="${src.dir}" excludes="**/*.java"/>
@@ -52,21 +34,13 @@
   <target name="jar" depends="compile"
 	  description="Generate the jarfile distributable.">
     <jar destfile="${dist.dir}/${jar.file}" basedir="${build.classes.dir}">
-      <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
       <manifest>
         <attribute name="Main-Class" value="${main.class}"/>
       </manifest>
     </jar>
   </target>
 
-  <target name="run" depends="jar" description="Run the application.">
-    <java jar="${dist.dir}/${jar.file}" fork="true">
-      <arg value="--name"/>
-      <arg value="Java"/>
-    </java>
-  </target>
-
-  <target name="run-hotswap" depends="jar"
+  <target name="run" depends="jar"
 	  description="Run the application in hotswap mode.">
     <java jar="${dist.dir}/${jar.file}" fork="true">
       <jvmarg line="-Xdebug -Xrunjdwp:transport=dt_socket,address=9000,server=y,suspend=n"/>
@@ -89,12 +63,6 @@
     <delete dir="${lib.dir}"/>
   </target>
 
-  <target name="javadoc" description="Generate Javadoc HTML.">
-    <javadoc destdir="${dist.dir}/javadoc">
-      <fileset dir="${src.dir}" includes="**/*.java" />
-    </javadoc>
-  </target>
-
   <target name="format" description="Run the indenter on all source files.">
     <apply executable="astyle">
       <arg value="--mode=java"/>
@@ -102,51 +70,5 @@
       <fileset dir="${src.dir}" includes="**/*.java"/>
       <fileset dir="${test.dir}" includes="**/*.java"/>
     </apply>
-  </target>
-
-  <target name="check">
-    <taskdef resource="checkstyletask.properties"/>
-    <checkstyle config="checkstyle.xml">
-      <fileset dir="src" includes="**/*.java"/>
-    </checkstyle>
-  </target>
-
-  <target name="optimize" depends="jar">
-    <taskdef resource="proguard/ant/task.properties"/>
-    <proguard>
-      <libraryjar path="${java.home}/lib/rt.jar"/>
-      <injar file="${dist.dir}/${jar.file}"/>
-      <outjar file="${dist.dir}/out.${jar.file}"/>
-      <keepclasseswithmembers access="public" type="class">
-	<method access="public" type="void" name="main"
-		parameters="java.lang.String[]"/>
-      </keepclasseswithmembers>
-    </proguard>
-    <delete file="${dist.dir}/${jar.file}"/>
-    <move file="${dist.dir}/out.${jar.file}" tofile="${dist.dir}/${jar.file}"/>
-  </target>
-
-  <!-- JUnit -->
-
-  <target name="test-compile" depends="compile">
-    <mkdir dir="${test.classes.dir}"/>
-    <javac srcdir="${test.dir}" destdir="${test.classes.dir}"
-	   classpath="${build.classes.dir}" includeantruntime="yes">
-      <compilerarg value="-Xlint"/>
-    </javac>
-  </target>
-
-  <target name="test" depends="test-compile" description="Run all tests.">
-    <junit>
-      <classpath>
-	<pathelement path="${build.classes.dir}"/>
-	<pathelement path="${test.classes.dir}"/>
-	<path refid="build.classpath"/>
-      </classpath>
-      <batchtest>
-	<formatter type="brief" usefile="false"/>
-	<fileset dir="${test.classes.dir}"/>
-      </batchtest>
-    </junit>
   </target>
 </project>

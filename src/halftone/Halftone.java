@@ -26,13 +26,13 @@ public class Halftone extends JComponent {
     private BufferedImage image;
     private static final double SQ2 = Math.sqrt(2);
     private static final double SCALE = 3.0;
+    private static final double DISP_SCALE = 1.5;
 
     public static void main(String[] args) {
         JFrame frame = new JFrame();
         frame.add(new Halftone());
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
         frame.setVisible(true);
     }
 
@@ -57,8 +57,8 @@ public class Halftone extends JComponent {
 
     public void setImage(BufferedImage display) {
         image = display;
-        Dimension size = new Dimension(image.getWidth() * 2,
-                                       image.getHeight() * 2);
+        Dimension size = new Dimension((int) (image.getWidth() * DISP_SCALE),
+                                       (int) (image.getHeight() * DISP_SCALE));
         AffineTransform scale
             = AffineTransform.getScaleInstance(1 / SCALE, 1 / SCALE);
         AffineTransformOp op
@@ -75,7 +75,8 @@ public class Halftone extends JComponent {
         g.fillRect(0, 0, getWidth(), getHeight());
 
         /* Adjust the display. */
-        g.scale(SCALE, SCALE);
+        g.scale(getWidth() / (2.0 * image.getWidth()),
+                getHeight() / (2.0 * image.getHeight()));
         g.translate(1.0, 1.0);
 
         /* Tune drawing parameters. */
